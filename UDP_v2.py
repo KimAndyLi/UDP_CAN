@@ -2,6 +2,7 @@ import socket
 import cantools
 import unittest
 import sys
+import struct
 
 # Rules:
 # UDP data field should be >= 8 bytes (cantools library requirement, but offcourse we can manually avoid this rule)
@@ -159,9 +160,33 @@ print(decode)
 
 
 # Transmitting CAN in UDP
-# # msg_id_tx=648
-# # byte_message=db.encode_message(msg_id_tx, {'Maximum_current_cap': Maximum_current_cap, 'Maximum_voltage_cap': Maximum_voltage_cap})
-# # sock.sendto(byte_message, (remote_ip, int(remote_port)))
+can_frame_fmt = "=IB3x8s"
+
+def build_can_frame(can_id, data):
+    can_dlc = len(data)
+    data = data.ljust(8, b'\x00')
+    return struct.pack(can_frame_fmt, can_id, can_dlc, data)
+    
+# create a raw socket and bind it to the given CAN interface
+s = socket.socket(socket.AF_CAN, socket.SOCK_RAW, socket.CAN_RAW)
+s.bind(("vcan0",))
+
+try:
+    s.send(build_can_frame(hex(id_full), data_bytes))
+except socket.error:
+    print('Error sending CAN frame')
+    
+# byte_message=db.encode_message(msg_id_tx, {'Maximum_current_cap': Maximum_current_cap, 'Maximum_voltage_cap': Maximum_voltage_cap})
+# sock.sendto(byte_message, (remote_ip, int(remote_port)))
+
+# Recieving CAN from vcan0
+def dissect_can_frame(frame):
+    can_id, can_dlc, data = struct.unpack(can_frame_fmt, frame)
+    return (can_id, can_dlc, data[:can_dlc])
+
+
+cf, addr = s.recvfrom(16)
+print('Received: can_id=%x, can_dlc=%x, data=%s' % dissect_can_frame(cf))
 
 
 # tests
