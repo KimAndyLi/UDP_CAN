@@ -4,13 +4,9 @@ import unittest
 import sys
 import struct
 
-# Rules:
-# UDP data field should be >= 8 bytes (cantools library requirement, but offcourse we can manually avoid this rule)
-
-# how to get extended or not +
-# how to calc dlc 0-8 variable +
-# как выделять поле дата если суммарно разная длина data +
-# как понять что начался новый фрейм
+# Hints:
+# Extended hex for "packet sender": 14080006802
+# Standart hex for "packet sender": 18240A02
 
 
 # UDP unit parameters:
@@ -50,37 +46,43 @@ if IDE=='0':
     DLC_int=int(DLC,2)
     print(f'DLC_int: {DLC_int}')
     id_full=int(bit_11_id,2)
-    print(f'full id hex: {id_full}')
+    print(f'full id int: {id_full}')
     if DLC_int=='0':
         print('DLC = 0, error')        
     elif DLC_int==1:
         data=data_bin[-20:-27:-1][::-1]
         print(f'data: {data}')
-        print(int(f'data_int:{data}',2))
+        data_int=int(data,2)
+        print(f'data_int:{data_int}')
     elif DLC_int==2:
         data=data_bin[-20:-35:-1][::-1]
         print(f'data: {data}')
-        print(int(f'data_int:{data}',2))
+        data_int=int(data,2)
+        print(f'data_int:{data_int}')
     elif DLC_int==3:
         data=data_bin[-20:-43:-1][::-1]
         print(f'data: {data}')
-        print(int(f'data_int:{data}',2))
+        data_int=int(data,2)
+        print(f'data_int:{data_int}')
     elif DLC_int==4:
         data=data_bin[-20:-51:-1][::-1]
         print(f'data: {data}')
-        print(int(f'data_int:{data}',2))
+        print(f'data_int:{data_int}')
     elif DLC_int==5:
         data=data_bin[-20:-59:-1][::-1]
         print(f'data: {data}')
-        print(int(f'data_int:{data}',2))
+        data_int=int(data,2)
+        print(f'data_int:{data_int}')
     elif DLC_int==6:
         data=data_bin[-20:-67:-1][::-1]
         print(f'data: {data}')
-        print(int(f'data_int:{data}',2))
+        data_int=int(data,2)
+        print(f'data_int:{data_int}')
     elif DLC_int==7:
         data=data_bin[-20:-75:-1][::-1]
         print(f'data: {data}')
-        print(int(f'data_int:{data}',2))
+        data_int=int(data,2)
+        print(f'data_int:{data_int}')
     elif DLC_int==8:
         data=data_bin[-20:-83:-1][::-1]
         print(f'data: {data}')
@@ -114,31 +116,38 @@ if IDE=='1':
     elif DLC_int==1:
         data=data_bin[-40:-48:-1][::-1]
         print(f'data: {data}')
-        print(int(f'data_int:{data}',2))
+        data_int=int(data,2)
+        print(f'data_int:{data_int}')
     elif DLC_int==2:
         data=data_bin[-40:-55:-1][::-1]
         print(f'data: {data}')
-        print(int(f'data_int:{data}',2))
+        data_int=int(data,2)
+        print(f'data_int:{data_int}')
     elif DLC_int==3:
         data=data_bin[-40:-62:-1][::-1]
         print(f'data: {data}')
-        print(int(f'data_int:{data}',2))
+        data_int=int(data,2)
+        print(f'data_int:{data_int}')
     elif DLC_int==4:
         data=data_bin[-40:-69:-1][::-1]
         print(f'data: {data}')
-        print(int(f'data_int:{data}',2))
+        data_int=int(data,2)
+        print(f'data_int:{data_int}')
     elif DLC_int==5:
         data=data_bin[-40:-75:-1][::-1]
         print(f'data: {data}')
-        print(int(f'data_int:{data}',2))
+        data_int=int(data,2)
+        print(f'data_int:{data_int}')
     elif DLC_int==6:
         data=data_bin[-40:-82:-1][::-1]
         print(f'data: {data}')
-        print(int(f'data_int:{data}',2))
+        data_int=int(data,2)
+        print(f'data_int:{data_int}')
     elif DLC_int==7:
         data=data_bin[-40:-89:-1][::-1]
         print(f'data: {data}')
-        print(int(f'data_int:{data}',2))
+        data_int=int(data,2)
+        print(f'data_int:{data_int}')
     elif DLC_int==8:
         data=data_bin[-40:-96:-1][::-1]
         print(f'data: {data}')
@@ -151,12 +160,11 @@ if IDE=='1':
 
 
 # Initialisasion DB and decoding parameters
-db = cantools.database.load_file('test.dbc', database_format='dbc', encoding='utf-8')
-msg_id_rx=str(remote_ip).replace('.','') # getting id for CANdb assotiation
-decode=db.decode_message(id_full, data_bytes)
-EVSE_present_Current=(decode['EVSE_present_Current'])
-EVSE_present_Voltage=(decode['EVSE_present_Voltage'])
-print(decode)
+# db = cantools.database.load_file('test.dbc', database_format='dbc', encoding='utf-8')
+# decode=db.decode_message(id_full, data_bytes)
+# EVSE_present_Current=(decode['EVSE_present_Current'])
+# EVSE_present_Voltage=(decode['EVSE_present_Voltage'])
+# print(decode)
 
 
 # Transmitting CAN in UDP
@@ -172,7 +180,7 @@ s = socket.socket(socket.AF_CAN, socket.SOCK_RAW, socket.CAN_RAW)
 s.bind(("vcan0",))
 
 try:
-    s.send(build_can_frame(hex(id_full), data_bytes))
+    s.send(build_can_frame(id_full, data_bytes))
 except socket.error:
     print('Error sending CAN frame')
     
@@ -187,6 +195,12 @@ def dissect_can_frame(frame):
 
 cf, addr = s.recvfrom(16)
 print('Received: can_id=%x, can_dlc=%x, data=%s' % dissect_can_frame(cf))
+
+db = cantools.database.load_file('test.dbc', database_format='dbc', encoding='utf-8')
+decode=db.decode_message(id_full, dissect_can_frame()[2])
+EVSE_present_Current=(decode['EVSE_present_Current'])
+EVSE_present_Voltage=(decode['EVSE_present_Voltage'])
+print(decode)
 
 
 # tests
