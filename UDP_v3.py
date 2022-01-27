@@ -1,3 +1,4 @@
+
 import socket
 import cantools
 import unittest
@@ -11,7 +12,7 @@ import struct
 
 # UDP unit parameters:
 remote_ip='127.0.0.1' # UDP ip
-remote_port='57175' # UPD port
+remote_port='47025' # UPD port
 
 # Socket initialisation
 UDP_IP = "127.0.0.1" # current machine address
@@ -224,7 +225,7 @@ print('Received: can_id=%x, can_dlc=%x, data=%s' % dissect_can_frame(cf))
 # Convert and transmit vcan to UDP
 can_id_vcan0=dissect_can_frame(cf)[0]
 can_data_vcan0=dissect_can_frame(cf)[2][::-1]
-transmit_message=db.encode_message(can_id_vcan0, can_data_vcan0)
+transmit_message=cf
 sock.sendto(transmit_message, (remote_ip, int(remote_port)))
 
 
