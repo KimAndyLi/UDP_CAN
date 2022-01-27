@@ -1,4 +1,3 @@
-
 import socket
 import cantools
 import unittest
@@ -9,10 +8,29 @@ import struct
 # Extended hex for "packet sender": 14080006802
 # Standart hex for "packet sender": 18240A02
 
+# "Packet sender" were using for transmiting CAN Frame in UDP format
+
+# Задание:
+'''
+Компьютер с установленной ОС Linux подключен к локальной сети. 
+На нём настроен виртуальный CAN-интерфейс vcan. В сети есть устройство,
+физически подключенное к CAN-шине, которое преобразует все принятые CAN-сообщения в UDP и
+ отправляет их на вышеуказанный компьютер. В свою очередь, это устройство слушает определенный UDP-порт,
+а принятые с него данные отправляет в интерфейс CAN. Адресация в сети и номера портов статичны и известны.
+Протокол упаковки UDP в CAN вам предстоит придумать при выполнении задания, при этом особых требований к протоколу не выдвигается.
+
+Реализуйте приложение на языке Python3 для данной Linux-машины, которое позволит виртуальным vcan обмениваться между собой CAN-сообщениями 
+(например, с помощью can-utils) и данными с физической CAN-шиной на удалённом устройстве.
+Будет плюсом, если вы покроете приложение юнит-тестами для 1-2 вариантов его использования.
+Пожалуйста, укажите ссылку на файл с выполненным тестовым заданием.
+'''
+
+
+
 
 # UDP unit parameters:
 remote_ip='127.0.0.1' # UDP ip
-remote_port='47025' # UPD port
+remote_port=input('enter port: ') # UPD port
 
 # Socket initialisation
 UDP_IP = "127.0.0.1" # current machine address
@@ -187,11 +205,11 @@ if IDE=='1':
 
 
 # Initialisasion DB and decoding parameters
-# db = cantools.database.load_file('test.dbc', database_format='dbc', encoding='utf-8')
-# decode=db.decode_message(id_full, data_bytes)
-# EVSE_present_Current=(decode['EVSE_present_Current'])
-# EVSE_present_Voltage=(decode['EVSE_present_Voltage'])
-# print(decode)
+db = cantools.database.load_file('test.dbc', database_format='dbc', encoding='utf-8')
+decode=db.decode_message(id_full, data_bytes)
+EVSE_present_Current=(decode['EVSE_present_Current'])
+EVSE_present_Voltage=(decode['EVSE_present_Voltage'])
+print(decode)
 
 
 # # Transmitting UDP to vcan0
@@ -229,7 +247,7 @@ transmit_message=cf
 sock.sendto(transmit_message, (remote_ip, int(remote_port)))
 
 
-
+# Tests
 class TestUDPCAN(unittest.TestCase):
     def setUp(self):
         pass
@@ -253,3 +271,11 @@ class TestUDPCAN(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+    
+'''
+Заключение:
+• В задании не указывается в каком виде присылаются данные в UDP прокотоле: полный CAN Frame (SOF, 11bitID, RTR/SRR и т.д) или только поле Data, поэтому
+использовались данные 18240A02 hex в Packet sender, в которых содержатся данные от начала CAN Frame (SOF) до (Data) включительно, не учитывается CRC, ACK, EOF и т.д.
+
+• Полученные данные с vcan0 пересылаются в UPD со следующим содержанием: can_id, can_dlc и can_data, так как библиотека vcan не пакует полный CAN frame.
+'''
